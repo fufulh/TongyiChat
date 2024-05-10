@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat with GPT</title>
+</head>
+<body>
+    <div id="chat-container">
+        <!-- 聊天消息将显示在这里 -->
+    </div>
+    <input id="chat-input" placeholder="Type a message...">
+    <button id="send-button">Send</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.0.0/dist/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        const socket = io(`http://${document.domain}:${location.port}/dashscope`, {transports: ['websocket']});
+        const chatContainer = document.getElementById('chat-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+
+        let currentResponse = ''; // 用于存储当前的响应片段
+
+        // 工具列表
+        const tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_current_time",
+                    "description": "当你想知道现在的时间时非常有用。"
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_current_weather",
+                    "description": "当你想查询指定城市的天气时非常有用。",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "城市或县区，比如北京市、杭州市、余杭区等。"
+                            }
+                        },
+                        "required": ["location"]
+                    }
+                }
+            }
+        ];
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('response', (data) => {
+            if (data.includes(': ')) {
+                const [role, content] = data.split(': ');
+                currentResponse += content; // 将新收到的内容添加到当前响应中
+                // 使用marked.js渲染Markdown
+                const parsedContent = marked.parse(currentResponse);
+                let statusElement = document.querySelector(`#status-${role}`);
+                if (!statusElement) {
+                    statusElement = document.createElement('div');
+                    statusElement.id = `status-${role}`;
+                    chatContainer.appendChild(statusElement);
+                }
+                statusElement.innerHTML = parsedContent; // 更新DOM以显示最新的响应内容
+            } else {
+                console.error('Received malformed data:', data);
+            }
+        });
+
+        sendButton.addEventListener('click', () => {
+            let message = chatInput.value.trim();
+            if (message) {
+                let yourStatusElement = document.querySelector('#status-You');
+                if (!yourStatusElement) {
+                    yourStatusElement = document.createElement('div');
+                    yourStatusElement.id = 'status-You';
+                    yourStatusElement.innerHTML = `<strong>You:</strong> <span>${message}</span>`;
+                    chatContainer.appendChild(yourStatusElement);
+                } else {
+                    yourStatusElement.querySelector('span').textContent = message;
+                }
+
+                // 检查消息是否调用了工具函数
+                let toolCallDetected = false;
+                tools.forEach(tool => {
+                    if (message.toLowerCase().includes(tool.function.name.toLowerCase())) {
+                        toolCallDetected = true;
+                        // 将工具信息添加到发送到后端的JSON中
+                        message = {
+                            "message": message,
+                            "tool": tool
+                        };
+                    }
+                });
+
+                if (toolCallDetected) {
+                    // 发送包含工具信息的JSON到后端
+                    socket.emit('message', JSON.stringify(message));
+                } else {
+                    // 发送普通消息到后端
+                    socket.emit('message', JSON.stringify(message));
+                }
+
+                chatInput.value = '';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Generator</title>
+    <style>
+        /* 添加一些基本的样式 */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #image-container {
+            margin-top: 20px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Generator</h1>
+    <p>Enter a description and click the button to generate an image:</p>
+    <input type="text" id="prompt-input" placeholder="Enter image description here">
+    <button id="generate-button">Generate Image</button>
+    <div id="image-container"></div>
+
+    <script>
+        // 获取输入框、按钮和图像容器元素
+        const promptInput = document.getElementById('prompt-input');
+        const generateButton = document.getElementById('generate-button');
+        const imageContainer = document.getElementById('image-container');
+
+        // 生成图像的函数
+        function generateImage() {
+            const prompt = promptInput.value; // 获取用户输入的描述
+            // 发送POST请求到后端
+            fetch('/generate_image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: prompt }) // 使用用户输入的提示
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    // 创建图像元素并设置其src属性为返回的URL
+                    const img = new Document.createElement('img');
+                    img.src = data.image_url;
+                    // 清空容器并添加新的图像元素
+                    imageContainer.innerHTML = '';
+                    imageContainer.appendChild(img);
+                } else if (data.error) {
+                    // 显示错误信息
+                    imageContainer.textContent = 'Error: ' + data.error;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                imageContainer.textContent = 'Error: Unable to generate image';
+            });
+        }
+
+        // 按钮点击事件处理
+        generateButton.addEventListener('click', generateImage);
+    </script>
+</body>
+</html>
