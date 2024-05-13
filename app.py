@@ -1,4 +1,5 @@
 import dashscope
+
 from flask import Flask, request, jsonify,render_template
 
 from chat.history import history_conversions, messages
@@ -13,6 +14,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 socketio = SocketIO(app, cors_allowed_origins='*')
 name_space = '/dashscope'
+
 
 
 @app.route('/')
@@ -45,8 +47,8 @@ def handle_message(message):
     stream_response(response_stream)
 
 
-@app.route('/generate_image<int:chatid>', methods=['POST'])
-def generate_image(chatid):
+@app.route('/generate_image', methods=['POST'])
+def generate_image():
     data = request.get_json()
     print(data)
     prompt = data.get('prompt', 'Mouse rides elephant')
