@@ -13,8 +13,6 @@ dashscope.api_key = "sk-0778e34d54d14e88a932ccc17b67c80c"
 baseurl = "http://127.0.0.1:5000/"
 
 
-
-
 def generate_images(prompt, n=1, size='1024*1024'):
     rsp = ImageSynthesis.call(model=ImageSynthesis.Models.wanx_v1,
                               prompt=prompt,
