@@ -10,7 +10,7 @@ from dashscope.api_entities.dashscope_response import Role
 from http import HTTPStatus
 dashscope.api_key = "sk-0778e34d54d14e88a932ccc17b67c80c"
 
-from base import engine, Base
+from database.base import engine, Base
 
 def create_tables():
     Base.metadata.create_all(engine)
