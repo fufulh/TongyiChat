@@ -7,6 +7,7 @@ import dashscope
 import requests
 import os
 from dashscope import ImageSynthesis
+from datetime import timedelta, datetime
 
 dashscope.api_key = "sk-0778e34d54d14e88a932ccc17b67c80c"
 
@@ -30,10 +31,16 @@ def generate_images(prompt, n=1, size='1024*1024'):
                              access_key=minio_access_key,
                              secret_key=minio_secret_key,
                              secure=False)  # 如果使用https，请将secure设置为True
+        # 设置预签名URL的有效期
+        expires_in = timedelta(days=1)
+
+        # 计算过期时间
+        expires_at = datetime.utcnow() + expires_in
         # 保存文件到 MinIO 服务器并获取 URL
         urls = []
         for result in rsp.output.results:
             url = result.url
+            print(url)
             file_name = os.path.basename(unquote(urlparse(url).path))
             file_path = os.path.join('./temp', file_name)
 
@@ -45,8 +52,14 @@ def generate_images(prompt, n=1, size='1024*1024'):
             try:
                 minio_client.fput_object(minio_bucket, file_name, file_path)
                 # 获取文件的 URL
-                object_url = minio_client.presigned_get_object(minio_bucket, file_name)
-                urls.append(object_url)
+                url = minio_client.presigned_get_object(minio_bucket,
+                                                        file_name,
+                                                        response_headers={
+                                                            'response-content-type': 'image/jpeg'
+                                                        })
+
+                print("预签名URL:", url)
+                urls.append(url)
             except S3Error as e:
                 return None, 'Failed to upload file to MinIO: {}'.format(e)
 
