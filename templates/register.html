@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"  type="text/css" href="/static/style.css">
+    <title>注册</title>
+</head>
+<body>
+    <div>
+    <h1>用户注册</h1>
+    <form method="POST">
+        <input type="text" name="id" placeholder="请输入ID" />
+        <br/>
+        <input type="text" name="username" placeholder="请输入用户名" />
+        <br/>
+        <input type="password" name="password" placeholder="请输入密码（小于12位）" />
+        <br/>
+        <!--jinja2的函数-->
+        {% if message %} {{message}} {% endif %}
+        <br/>
+        <input type="submit" value="注册" />
+        <input type="reset" value="重置" />
+        <a href="{{ url_for('user_login') }}">登录</a>
+    </form>
+    </div>
+</body>
+</html>
+
